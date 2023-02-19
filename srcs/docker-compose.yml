@@ -1,0 +1,70 @@
+version: "3.9"
+
+volumes:
+  db:
+    name: db
+    driver: local
+    driver_opts:
+      type: none
+      device: /home/sghajdao/data/db
+      o: bind 
+      
+  wp:
+    name: wp
+    driver: local
+    driver_opts:
+      type: none
+      device: /home/sghajdao/data/wp
+      o: bind
+
+networks:
+  inception:
+    name: inception
+    driver: bridge 
+
+services:
+  mariadb:
+    container_name: mariadb
+    image: mariadb:database
+    volumes:
+      - db:/var/lib/mysql
+    build:
+      context: ./requirements/mariaDB/
+      args:
+        MYSQL_DATABASE: ${MYSQL_DATABASE}
+        MYSQL_USER: ${MYSQL_USER}
+        MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+        MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    env_file:
+      - .env
+    networks:
+      - inception
+    restart: unless-stopped
+
+  wordpress:
+    container_name: wordpress
+    image: wordpress:website
+    build: ./requirements/wordpress/
+    depends_on:
+      - mariadb
+    volumes:
+      - wp:/var/www/html
+    env_file:
+      - .env
+    networks:
+      - inception
+    restart: unless-stopped 
+  
+  nginx:
+    container_name: nginx
+    image: nginx:webServer
+    build: ./requirements/nginx/
+    depends_on:
+      - wordpress
+    ports:
+      - 443:443
+    volumes:
+      - wp:/var/www/html
+    networks:
+      - inception
+    restart: unless-stopped

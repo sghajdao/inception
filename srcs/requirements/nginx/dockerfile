@@ -1,0 +1,15 @@
+FROM debian:buster
+# update and upgrade and install nginx and openssl
+RUN apt-get update -y && apt-get upgrade -y && apt-get install -y nginx && apt install -y openssl
+
+COPY ./conf/config /etc/nginx/sites-available/default
+RUN mkdir /etc/nginx/ssl
+
+# generate the ssl certificate
+RUN openssl req -new -newkey rsa:2048 -nodes -x509 -days 730 \
+    -out /etc/nginx/ssl/sghajdao.csr \
+    -keyout /etc/nginx/ssl/sghajdao.key \
+    -subj "/C=MA/ST=Béni Mellal-Khénifra/L=Khouribga/O=1337COMPANY/OU=1337/CN=sghajdao.42.fr"
+
+# keep the container running by running nginx in the foreground
+CMD ["nginx", "-g", "daemon off;"]

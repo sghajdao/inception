@@ -1,0 +1,34 @@
+server {
+    # IPv4 configs
+    listen 443 ssl;
+    # IPv6 configs
+    listen [::]:443 ssl;
+
+    server_name sghajdao.42.fr;
+
+    # SSL configuration
+    ssl_certificate /etc/nginx/ssl/sghajdao.csr;
+    ssl_certificate_key /etc/nginx/ssl/sghajdao.key;
+    ssl_protocols TLSv1.2 TLSv1.3;
+
+
+    # add wordpress + php-fpm
+    index index.php index.html index.htm;
+    root /var/www/html;
+
+    # pass the PHP scripts to FastCGI server listening on wordpress:9000
+    location ~ \.php$ {
+
+        fastcgi_pass wordpress:9000;
+		fastcgi_split_path_info ^(.+\.php)(/.+)$;
+		fastcgi_index index.php;
+		fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+		fastcgi_param PATH_INFO $fastcgi_path_info;
+		include fastcgi_params;
+    }
+}
+
+#   Running PHP as a CGI means that you basically tell your web server the
+#   location of the PHP executable file, and the server runs that executable.
+#   whereas. PHP FastCGI Process Manager (PHP-FPM) is an alternative FastCGI
+#   daemon for PHP that allows a website to handle strenuous loads.
